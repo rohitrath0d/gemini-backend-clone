@@ -25,29 +25,29 @@ model User {
 
   messageCount Int      @default(0) // for rate limiting
   createdAt    DateTime @default(now())
-
+  updatedAt    DateTime @default(now())
 
   // Add reverse relation in User model
   // user User @relation(fields: [userId], references: [id])    --> "Hey Prisma, this Chatroom belongs to a User" . BUT... in your User model, you didn’t define the reverse side of that relation — which Prisma requires.
-  chatrooms    Chatroom[]
+  chatrooms        Chatroom[]
+  subscriptionTier  String     @default("basic")
 }
 
-
 model Chatroom {
-  id              String        @id @default(uuid())
-  name            String
-  user            User          @relation(fields: [userId], references: [id])
-  userId          String
-  messages        Message[]
-  createdAt       DateTime      @default(now())
+  id        String    @id @default(uuid())
+  name      String
+  user      User      @relation(fields: [userId], references: [id])
+  userId    String
+  messages  Message[]
+  createdAt DateTime  @default(now())
 }
 
 model Message {
-  id              String      @id @default(uuid())
-  content         String
-  response        String?
-  chatroom        Chatroom      @relation(fields: [chatroomId], references: [id])
-  chatroomId      String
-  userId          String
-  createdAt       DateTime      @default(now())
+  id         String   @id @default(uuid())
+  content    String
+  response   String?
+  chatroom   Chatroom @relation(fields: [chatroomId], references: [id])
+  chatroomId String
+  userId     String
+  createdAt  DateTime @default(now())
 }

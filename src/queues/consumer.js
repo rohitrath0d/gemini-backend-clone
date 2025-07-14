@@ -20,14 +20,14 @@ const startConsumer = async () => {
     const channel = await connection.createChannel();
     await channel.assertQueue(QUEUE_NAME, { durable: true });
 
-    console.log(`🔁 [Consumer] Waiting for messages in '${QUEUE_NAME}'`);
+    console.log(`[Consumer] Waiting for messages in '${QUEUE_NAME}'`);
 
     channel.consume(QUEUE_NAME, async (msg) => {
       if (msg !== null) {
         const job = JSON.parse(msg.content.toString());
         const { messageId, content, chatroomId } = job;
 
-        console.log(`📥 Received message for Gemini:`, job);
+        console.log(`Received message for Gemini:`, job);
 
         // // 1. Get Gemini response (mock for now)
         // const geminiReply = await fetchGeminiResponse(content);
@@ -40,7 +40,7 @@ const startConsumer = async () => {
           data: { response: geminiReply }
         });
 
-        console.log(`✅ Updated message with Gemini response.`);
+        console.log(`Updated message with Gemini response.`);
 
         // 3. Acknowledge the message
         channel.ack(msg);
@@ -48,7 +48,7 @@ const startConsumer = async () => {
     }, { noAck: false });
 
   } catch (error) {
-    console.error("❌ Error in consumer:", error);
+    console.error("Error in consumer:", error);
   }
 };
 

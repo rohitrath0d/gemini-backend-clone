@@ -141,7 +141,8 @@ export const forgotPassword = async (req, res) => {
 
     await prisma.user.update({
       where: { mobileNumber },
-      data: { otp }
+      // data: { otp }                        // this stores otp in db after generating and doesn't clean up.
+      data: { otp: null }                     // this clean ups/ prevent the otp from strong it to db.
     });
 
     // mock sending OTP by returning it

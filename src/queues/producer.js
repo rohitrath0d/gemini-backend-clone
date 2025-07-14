@@ -10,5 +10,5 @@ export const sendToGeminiQueue = async (job) => {
     persistent: true
   });
 
-  console.log(`📤 Job sent to Gemini queue:`, job);
+  console.log(`Job sent to Gemini queue:`, job);
 };

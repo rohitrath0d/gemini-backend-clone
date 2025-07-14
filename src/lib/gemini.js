@@ -36,20 +36,20 @@ export const askGemini = async (prompt) => {
     // for await (const chunk of result.stream) {
     //   response += chunk.text();
     // }
-    // return response || "⚠️ Gemini returned empty response.";
+    // return response || "Gemini returned empty response.";
 
     
     // const text = result?.response?.text();
     const text = result?.candidates?.[0]?.content?.parts?.[0]?.text;
 
-    return text || "⚠️ Gemini returned no response.";
+    return text || "Gemini returned no response.";
 
     // const response = await result.response;
     // return response.text();
 
 
   } catch (error) {
-    console.error("❌ Gemini API error:", error);
-    return "⚠️ Gemini failed to generate a response.";
+    console.error("Gemini API error:", error);
+    return "Gemini failed to generate a response.";
   }
 };

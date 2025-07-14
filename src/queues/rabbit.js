@@ -9,9 +9,9 @@ export const connectRabbit = async () => {
   try {
     connection = await amqp.connect(RABBITMQ_URL);
     channel = await connection.createChannel();
-    console.log('✅ RabbitMQ connected');
+    console.log('RabbitMQ connected');
   } catch (error) {
-    console.error('❌ RabbitMQ connection error:', error);
+    console.error('RabbitMQ connection error:', error);
     process.exit(1);
   }
 };
