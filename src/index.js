@@ -35,6 +35,10 @@ const PORT = process.env.PORT || 3000;
 
 // app.listen(PORT, ()=> console.log(`Server running on ${PORT}`));
 
+app.get('/', (req, res) => {
+  res.send('GEMINNI BACKEND IS UP AND RUNNING!!');
+});
+
 // merging both app service and messqge queue service to deploy as combined.
 app.listen(PORT, async () => {
   console.log(`Server running on port ${PORT}`);
