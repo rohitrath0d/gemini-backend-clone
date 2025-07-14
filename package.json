@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "nodemon src/index.js"
+  "start": "concurrently \"node src/index.js\" \"node src/queues/rabbit.js\""
   },
   "keywords": [],
   "author": "",
