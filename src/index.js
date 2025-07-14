@@ -31,7 +31,8 @@ app.use('/api/chatroom', chatroomRoutes)
 app.use('/api/subscription', stripeSubscriptionRoutes)
 
 
-// const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3000;
+
 // app.listen(PORT, ()=> console.log(`Server running on ${PORT}`));
 
 // merging both app service and messqge queue service to deploy as combined.
