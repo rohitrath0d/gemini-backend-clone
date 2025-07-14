@@ -1,8 +1,10 @@
 import { PrismaClient } from "@prisma/client"
 import { sendToGeminiQueue } from "../queues/producer.js";
-import { response } from "express";
+import NodeCache from 'node-cache';
+
 
 const prisma = new PrismaClient();
+const cache = new NodeCache({ stdTTL: 300 });           // 5 mins cache: 60s X 5m
 
 
 export const createChatroom = async (req, res) => {
@@ -50,6 +52,9 @@ export const createChatroom = async (req, res) => {
       }
     });
 
+    // ⏳ Invalidate cached list for this user
+    cache.del(`chatrooms:${userId}`);
+
     // return success response
     res.status(200).json({
       success: true,
@@ -71,14 +76,26 @@ export const getChatroomListByUser = async (req, res) => {
     const userId = req.user.userId;
     if (!userId) return res.status(400).json({ success: false, error: "Unauthorized access!" });
 
+    const cacheKey = `chatrooms:${userId}`;
+
+    const cached = cache.get(cacheKey);
+    if (cached) {
+      return res.status(200).json({ success: true, chatRooms: cached, cached: true });
+    }
+
     // fetch chatrooms from DB
     const chatRoomList = await prisma.chatroom.findMany({
       where: {
         // name: chatroom,
         userId: userId,
         // chatRoom                           // no need to pass anything, just get it with ID
+      },
+      orderBy: {
+        createdAt: 'desc'
       }
     })
+
+    cache.set(cacheKey, chatRoomList);
 
     if (chatRoomList) return res.status(200).json({
       success: true,
@@ -151,81 +168,81 @@ export const getMessageOfChatroom = async (req, res) => {
   }
 }
 
-export const sendMessageViaGemini = async(req, res) => {
-try {
+export const sendMessageViaGemini = async (req, res) => {
+  try {
 
-  // first getting chatroom id
-  const {id:chatroomId} = req.params;
-  console.log(chatroomId, ": chatroom id");
+    // first getting chatroom id
+    const { id: chatroomId } = req.params;
+    console.log(chatroomId, ": chatroom id");
 
-  if(!chatroomId) return res.status(404).json({
-    success: false, 
-    error: "chatRoom id is not provided || Unauthorized access!"
-  });
+    if (!chatroomId) return res.status(404).json({
+      success: false,
+      error: "chatRoom id is not provided || Unauthorized access!"
+    });
 
-  // req.user.userId form authMiddleware
-  const userId = req.user.userId;
-  console.log(userId, ": user's iD");
-  if(!userId) return res.status(401).json({
-    success: false,
-    error: "Unauthorized access"
-  });
+    // req.user.userId form authMiddleware
+    const userId = req.user.userId;
+    console.log(userId, ": user's iD");
+    if (!userId) return res.status(401).json({
+      success: false,
+      error: "Unauthorized access"
+    });
 
-  // now get content from the user from body
-  const {content} = req.body;
-  console.log(content, ": message content");
-  if(!content) return res.status(404).json({
-    success: false,
-    error: "Content is required to get response"
-  });
+    // now get content from the user from body
+    const { content } = req.body;
+    console.log(content, ": message content");
+    if (!content) return res.status(404).json({
+      success: false,
+      error: "Content is required to get response"
+    });
 
-  // now have to check that chatroom exists, belongs to that user.
-  const validateChatroomExistence = await prisma.chatroom.findFirst({
-    where: {
-      userId: userId,
-      // chatroomId: chatroomId         // chatroomId → id in Prisma
-      id: chatroomId
-    }
-  });
-  if(!validateChatroomExistence) return res.status(404).json({
-    success: false,
-    error: "Chatroom not found in the database. Create new one!"
-  });
+    // now have to check that chatroom exists, belongs to that user.
+    const validateChatroomExistence = await prisma.chatroom.findFirst({
+      where: {
+        userId: userId,
+        // chatroomId: chatroomId         // chatroomId → id in Prisma
+        id: chatroomId
+      }
+    });
+    if (!validateChatroomExistence) return res.status(404).json({
+      success: false,
+      error: "Chatroom not found in the database. Create new one!"
+    });
 
-  const saveMessageToDB = await prisma.message.create({
-    data: {
+    const saveMessageToDB = await prisma.message.create({
+      data: {
+        content,
+        userId,
+        chatroomId,
+        response: null,
+      }
+    });
+
+    // enqueue to rabbitMQ. Calling sendToGeminiQueue() with:
+    // const messageQueue = sendToGeminiQueue({
+    const messageQueue = await sendToGeminiQueue({
+      messageId: saveMessageToDB.id,
       content,
-      userId,
-      chatroomId,
-      response: null,
-    }
-  });
+      chatroomId
+    });
 
-  // enqueue to rabbitMQ. Calling sendToGeminiQueue() with:
-  // const messageQueue = sendToGeminiQueue({
-  const messageQueue = await sendToGeminiQueue({
-    messageId: saveMessageToDB.id,
-    content,
-    chatroomId
-  });
+    res.status(200).json({
+      success: true,
+      // message: "Response generated successfully!",
+      // userId,
+      // chatroomId,
+      // content,
+      // // response: response
 
-  res.status(200).json({
-    success: true,
-    // message: "Response generated successfully!",
-    // userId,
-    // chatroomId,
-    // content,
-    // // response: response
+      messages: []
 
-    messages: []
+    })
 
-  })
-  
-} catch (error) {
-  console.log(error);
-  return res.status(500).json({
-    success: false,
-    error: "Error in Sending Message via Gemini AI"
-  })
-}
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({
+      success: false,
+      error: "Error in Sending Message via Gemini AI"
+    })
+  }
 }
