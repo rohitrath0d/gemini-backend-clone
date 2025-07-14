@@ -9,7 +9,7 @@ import userRoutes from './routes/userRoutes.js';
 import chatroomRoutes from './routes/chatroomRoutes.js'
 import stripeSubscriptionRoutes from './routes/stripeSubscriptionRoutes.js';
 
-import { connectRabbit } from './queues/rabbit.js';
+import { connectRabbit, getChannel } from './queues/rabbit.js';
 import { handleStripeWebhook } from './controllers/stripeSubcscriptionController.js';
 
 
@@ -36,12 +36,12 @@ app.use('/api/subscription', stripeSubscriptionRoutes)
 
 // merging both app service and messqge queue service to deploy as combined.
 app.listen(PORT, async () => {
-  console.log(`🚀 Server running on port ${PORT}`);
+  console.log(`Server running on port ${PORT}`);
 
   await connectRabbit();
 
   const channel = getChannel();
-  const QUEUE_NAME = 'gemini-verification';
+  const QUEUE_NAME = 'gemini_tasks';
 
   await channel.assertQueue(QUEUE_NAME);
 
@@ -49,7 +49,7 @@ app.listen(PORT, async () => {
   channel.consume(QUEUE_NAME, async (msg) => {
     if (msg !== null) {
       const data = JSON.parse(msg.content.toString());
-      console.log('📥 Received from RabbitMQ:', data);
+      console.log('Received from RabbitMQ:', data);
 
       // TODO: Process the message as needed
       // e.g., verify image, update DB, notify user...
