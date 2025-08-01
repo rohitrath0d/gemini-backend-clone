@@ -160,3 +160,12 @@ npm start && node src/queues/consumer.js
 
 # [Render Deployment Link](https://gemini-backend-clone-zuhg.onrender.com)
 
+----
+
+## 🚫 License and Usage
+
+- This project is published solely for *portfolio and demonstration* purposes.
+
+- You are *not permitted* to copy, reuse, modify, or redistribute any part of the codebase or related assets without explicit permission.
+
+- All rights are reserved by Rohit Rathod.
